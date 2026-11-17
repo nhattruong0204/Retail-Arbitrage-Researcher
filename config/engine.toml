@@ -1,0 +1,191 @@
+# config/engine.toml  ->  arb_core::EngineConfig
+# Secrets (Telegram token, Shopee/Lazada credentials) are NOT here; they come from the
+# environment. See docs/02-architecture.md §6.
+
+schema_version = 1
+
+# Identify the bot honestly and give site operators a way to reach you.
+user_agent = "retail-arb-monitor/0.1 (+mailto:REPLACE-contact@example.com)"
+
+[thresholds]
+min_roi_bps = 700             # 7.00%
+min_net_profit = 1_500_000
+mode = "any"                  # "any" = ROI OR absolute profit; "all" = both
+watch_roi_bps = 200           # positive spreads >= 2% appear in /top_spreads
+
+[schedule]
+base_interval_secs = 60
+burst_interval_secs = 10      # a target; per-source requests_per_minute always wins
+jitter_bps = 1000             # +/-10% of the interval
+
+  # ICT wall-clock, half-open [start, end). start > end wraps midnight.
+  [[schedule.windows]]
+  label = "midnight"
+  start = "23:58:00"
+  end = "00:15:00"
+
+  [[schedule.windows]]
+  label = "noon"
+  start = "11:58:00"
+  end = "12:15:00"
+
+  [[schedule.windows]]
+  label = "evening"
+  start = "19:58:00"
+  end = "20:15:00"
+
+  # Days (ICT) on which windows are armed. month = 0 means every month.
+  # Remove all entries to arm the windows every day.
+  [[schedule.campaign_days]]
+  month = 11
+  day = 11
+
+  [[schedule.campaign_days]]
+  month = 12
+  day = 12
+
+  [[schedule.campaign_days]]
+  month = 0
+  day = 15
+
+  [[schedule.campaign_days]]
+  month = 0
+  day = 25
+
+[decay]
+fallback_haircut_bps = 500    # delivery unknown or slower than every tier
+long_delivery_days = 5
+
+  [[decay.tiers]]
+  max_delivery_days = 1       # same/next-day pickup at a retail store
+  haircut_bps = 50
+
+  [[decay.tiers]]
+  max_delivery_days = 3
+  haircut_bps = 150
+
+  [[decay.tiers]]
+  max_delivery_days = 6
+  haircut_bps = 350
+
+[filter]
+negative_tokens = [
+  "ốp", "ốp lưng", "kính", "cường lực", "dây đeo", "bao da", "miếng dán", "sạc", "cáp",
+  "xác", "cũ", "99%", "98%", "like new", "likenew", "đã qua sử dụng", "trưng bày",
+  "lock", "trả góp", "cọc", "đặt cọc", "thuê", "mô hình", "phụ kiện",
+]
+price_floor_ratio_bps = 6000  # reject below 60% of the trailing median
+median_window = 200
+median_min_samples = 10
+require_authorized_seller = true
+low_stock_threshold = 3
+
+[dedup]
+bucket_width = 100_000
+cooldown_secs = 900
+realert_drop_bps = 100        # re-alert inside the cooldown on a further 1% drop
+max_entries = 50_000
+
+[cashback]
+# Default is disabled: affiliate programmes generally void commission on your own
+# orders. Enable only for a cashback programme whose terms you have read.
+mode = "disabled"             # "disabled" | "listed_commission" | "fixed"
+fixed_bps = 0
+realization_bps = 7000
+sources = []
+
+[channels]
+alert_capacity = 256
+event_capacity = 8192
+record_observations = true    # raw listings for replay; ~1 KB per poll result
+
+# ---- Sources -----------------------------------------------------------------------
+# requests_per_minute is the politeness budget for the whole domain. Start low.
+
+[[source]]
+source = "tgdd"
+requests_per_minute = 20
+burst = 4
+max_concurrency = 2
+timeout_ms = 8000
+breaker_failure_threshold = 5
+breaker_open_secs = 60
+default_shipping_fee = 0
+default_delivery = { min_days = 0, max_days = 1 }
+default_vat_invoice = "available"
+activates_warranty_at_sale = true
+
+[[source]]
+source = "cellphones"
+requests_per_minute = 20
+burst = 4
+max_concurrency = 2
+timeout_ms = 8000
+breaker_failure_threshold = 5
+breaker_open_secs = 60
+default_shipping_fee = 0
+default_delivery = { min_days = 0, max_days = 1 }
+default_vat_invoice = "available"
+
+[[source]]
+source = "shopdunk"
+requests_per_minute = 12
+burst = 3
+max_concurrency = 2
+timeout_ms = 8000
+breaker_failure_threshold = 5
+breaker_open_secs = 60
+default_shipping_fee = 0
+default_delivery = { min_days = 0, max_days = 2 }
+default_vat_invoice = "available"
+
+[[source]]
+source = "fptshop"
+enabled = false
+requests_per_minute = 12
+burst = 3
+max_concurrency = 2
+timeout_ms = 8000
+breaker_failure_threshold = 5
+breaker_open_secs = 60
+default_shipping_fee = 0
+default_delivery = { min_days = 0, max_days = 1 }
+default_vat_invoice = "available"
+activates_warranty_at_sale = true
+
+[[source]]
+source = "hoangha"
+enabled = false
+requests_per_minute = 12
+burst = 3
+max_concurrency = 2
+timeout_ms = 8000
+breaker_failure_threshold = 5
+breaker_open_secs = 60
+default_shipping_fee = 0
+default_delivery = { min_days = 0, max_days = 2 }
+default_vat_invoice = "available"
+
+[[source]]
+source = "shopee_mall"
+requests_per_minute = 30      # keep under the quota shown in your affiliate dashboard
+burst = 5
+max_concurrency = 4
+timeout_ms = 6000
+breaker_failure_threshold = 5
+breaker_open_secs = 120
+default_shipping_fee = 30_000
+default_delivery = { min_days = 3, max_days = 6 }
+default_vat_invoice = "on_request"
+
+[[source]]
+source = "lazmall"
+requests_per_minute = 30
+burst = 5
+max_concurrency = 4
+timeout_ms = 6000
+breaker_failure_threshold = 5
+breaker_open_secs = 120
+default_shipping_fee = 30_000
+default_delivery = { min_days = 3, max_days = 6 }
+default_vat_invoice = "on_request"

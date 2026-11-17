@@ -1,0 +1,18 @@
+[package]
+name = "arb-cli"
+description = "Binary: config loading, wiring, shutdown. Owner: S-2."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+# Wave 0 skeleton. The owning agent adds dependencies from [workspace.dependencies] only.
+[dependencies]
+arb-core = { workspace = true }
+arb-connectors = { workspace = true }
+arb-engine = { workspace = true }
+arb-notify = { workspace = true }
+arb-storage = { workspace = true }
+
+[lints]
+workspace = true

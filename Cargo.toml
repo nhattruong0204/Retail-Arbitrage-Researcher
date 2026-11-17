@@ -1,0 +1,79 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# Edition 2024 needs >= 1.85 and the code uses let-chains (stable since 1.88).
+rust-version = "1.88"
+publish = false
+
+# Version floors. Wave 0 gate: run `cargo generate-lockfile`, commit Cargo.lock,
+# and from then on only bump with an explicit `cargo update -p <crate>` commit.
+[workspace.dependencies]
+arb-core = { path = "crates/arb-core" }
+arb-connectors = { path = "crates/arb-connectors" }
+arb-engine = { path = "crates/arb-engine" }
+arb-notify = { path = "crates/arb-notify" }
+arb-storage = { path = "crates/arb-storage" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.9"
+thiserror = "2"
+anyhow = "1"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock", "serde"] }
+chrono-tz = { version = "0.10", features = ["serde"] }
+
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "signal", "fs"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+futures = "0.3"
+
+# 0.13: rustls is the default backend; `query`/`form` are opt-in features.
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2", "json", "query", "gzip", "brotli"] }
+governor = "0.10"
+backon = "1"
+scraper = "0.23"
+url = "2"
+sha2 = "0.10"
+hmac = "0.12"
+hex = "0.4"
+
+moka = { version = "0.12", features = ["future"] }
+dashmap = "6"
+arc-swap = "1"
+unicode-normalization = "0.1"
+
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "macros", "migrate", "chrono"] }
+teloxide = { version = "0.17", default-features = false, features = ["macros", "rustls", "ctrlc_handler", "throttle"] }
+notify = "8"
+clap = { version = "4", features = ["derive", "env"] }
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+proptest = "1"
+wiremock = "0.6"
+tempfile = "3"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+# Money is integer-only. Any float needs a local #[allow] with a justification comment.
+float_arithmetic = "deny"
+indexing_slicing = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+# Unwind (not abort) so a panicking task is contained by its JoinHandle and supervised.
+panic = "unwind"

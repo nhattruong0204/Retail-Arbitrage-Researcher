@@ -1,0 +1,173 @@
+# config/skus.toml  ->  arb_core::SkuCatalog
+#
+# EVERY PRICE, URL AND ID BELOW IS AN ILLUSTRATIVE PLACEHOLDER showing the schema.
+# Replace them with values you have verified yourself before running against live
+# sources: canonical product URLs from each retailer, real Shopee (shop_id, item_id)
+# pairs for the brand's Mall store, and buyback quotes you collected from dealers.
+#
+# Rules enforced by SkuCatalog::validate():
+#   - ids are slugs: [a-z0-9-], no colour in the SKU id
+#   - retailer mappings need an https url; shopee mappings need shop_id + item_id
+#   - every enabled SKU needs at least one [[buyback]] quote
+#   - search-only SKUs (no mappings) need required_tokens
+# Amounts are integer dong. Rates are basis points (10000 = 100%).
+
+schema_version = 1
+
+# ------------------------------------------------------------------------------------
+[[sku]]
+id = "iphone-16-pro-max-256-vna"
+display_name = "iPhone 16 Pro Max 256GB VN/A"
+brand = "Apple"
+category = "phone"
+storage_gb = 256
+region_code = "VN/A"
+# Stage 2 matching (search results only). Tokens are matched on the normalized title.
+required_tokens = ["iphone", "16", "pro", "max", "256gb"]
+# Sibling models that share most tokens with this SKU.
+forbidden_tokens = ["512gb", "1tb", "16e", "plus"]
+retail_benchmark = 30_990_000
+search_queries = ["iphone 16 pro max 256gb chính hãng vn/a"]
+
+  [[sku.colors]]
+  id = "natural-titanium"
+  display = "Titan Tự Nhiên"
+  aliases = ["titan tự nhiên", "natural titanium"]
+  liquidity_bps = 10000
+
+  [[sku.colors]]
+  id = "white-titanium"
+  display = "Titan Trắng"
+  aliases = ["titan trắng", "white titanium"]
+  liquidity_bps = 9950
+
+  [[sku.colors]]
+  id = "black-titanium"
+  display = "Titan Đen"
+  aliases = ["titan đen", "black titanium"]
+  liquidity_bps = 9850
+
+  [[sku.colors]]
+  id = "desert-titanium"
+  display = "Titan Sa Mạc"
+  aliases = ["titan sa mạc", "desert titanium"]
+  liquidity_bps = 9800
+
+  [[sku.mappings]]
+  source = "tgdd"
+  url = "https://www.thegioididong.com/dtdd/REPLACE-with-canonical-slug"
+
+  [[sku.mappings]]
+  source = "cellphones"
+  url = "https://cellphones.com.vn/REPLACE-with-canonical-slug.html"
+
+  [[sku.mappings]]
+  source = "shopdunk"
+  url = "https://shopdunk.com/REPLACE-with-canonical-slug"
+
+  # One mapping per colour when the marketplace lists colours as separate items.
+  [[sku.mappings]]
+  source = "shopee_mall"
+  shop_id = "REPLACE_SHOP_ID"
+  item_id = "REPLACE_ITEM_ID"
+  color = "natural-titanium"
+
+  [[sku.mappings]]
+  source = "lazmall"
+  item_id = "REPLACE_ITEM_ID"
+  url = "https://www.lazada.vn/products/REPLACE.html"
+
+# ------------------------------------------------------------------------------------
+[[sku]]
+id = "macbook-air-m3-13-16-256"
+display_name = "MacBook Air 13\" M3 16GB/256GB"
+brand = "Apple"
+category = "laptop"
+storage_gb = 256
+ram_gb = 16
+required_tokens = ["macbook", "air", "m3", "16gb", "256gb"]
+forbidden_tokens = ["15 inch", "m2", "m4", "512gb", "8gb"]
+retail_benchmark = 24_990_000
+
+  [[sku.colors]]
+  id = "midnight"
+  display = "Midnight"
+  aliases = ["midnight", "xanh đen"]
+  liquidity_bps = 10000
+
+  [[sku.colors]]
+  id = "starlight"
+  display = "Starlight"
+  aliases = ["starlight", "vàng nhạt"]
+  liquidity_bps = 9900
+
+  [[sku.mappings]]
+  source = "fptshop"
+  url = "https://fptshop.com.vn/may-tinh-xach-tay/REPLACE-with-canonical-slug"
+
+  [[sku.mappings]]
+  source = "cellphones"
+  url = "https://cellphones.com.vn/REPLACE-with-canonical-slug.html"
+
+# ------------------------------------------------------------------------------------
+# Search-only SKU: no curated mapping, so it relies on stages 2 and 3.
+[[sku]]
+id = "airpods-pro-2-usbc"
+display_name = "AirPods Pro 2 (USB-C)"
+brand = "Apple"
+category = "audio"
+required_tokens = ["airpods", "pro", "2", "usb-c"]
+forbidden_tokens = ["lightning", "pro 3", "airpods 4"]
+retail_benchmark = 5_490_000
+search_queries = ["airpods pro 2 usb-c chính hãng"]
+enabled = false
+
+# ------------------------------------------------------------------------------------
+# Exit prices. color omitted = base quote; the listing colour's liquidity_bps applies.
+# max_age_secs: past this the quote still prices spreads, but they are flagged
+# StaleBuybackQuote and capped at Normal priority. Refresh via /set_exit.
+
+[[buyback]]
+sku_id = "iphone-16-pro-max-256-vna"
+dealer = "REPLACE dealer name (HCMC)"
+city = "hcmc"
+price = 28_800_000
+condition = "sealed_unactivated"
+no_invoice_penalty = 300_000
+source = "config"
+quoted_at = "2026-11-10T09:00:00+07:00"
+max_age_secs = 86_400
+
+# Colour-specific quote: used as-is for that colour, no multiplier.
+[[buyback]]
+sku_id = "iphone-16-pro-max-256-vna"
+color = "desert-titanium"
+dealer = "REPLACE dealer name (Hanoi)"
+city = "hanoi"
+price = 28_100_000
+condition = "sealed_unactivated"
+no_invoice_penalty = 300_000
+source = "config"
+quoted_at = "2026-11-10T09:00:00+07:00"
+max_age_secs = 86_400
+
+[[buyback]]
+sku_id = "macbook-air-m3-13-16-256"
+dealer = "REPLACE published trade-in table"
+city = "hcmc"
+price = 21_500_000
+condition = "sealed_unactivated"
+no_invoice_penalty = 500_000
+source = "trade_in_table"
+quoted_at = "2026-11-08T09:00:00+07:00"
+max_age_secs = 259_200
+
+[[buyback]]
+sku_id = "airpods-pro-2-usbc"
+dealer = "REPLACE dealer name (HCMC)"
+city = "hcmc"
+price = 4_700_000
+condition = "sealed_unactivated"
+source = "config"
+quoted_at = "2026-11-10T09:00:00+07:00"
+max_age_secs = 86_400

@@ -1,0 +1,21 @@
+[package]
+name = "arb-core"
+description = "Frozen shared contracts: money, domain models, config schema, ports, errors."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+# Deliberately no tokio / reqwest / sqlx here: this crate is pure types + integer math,
+# so every other crate compiles against it without dragging in a runtime.
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+chrono-tz = { workspace = true }
+
+[dev-dependencies]
+toml = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,110 @@
+# config/vouchers_11_11.toml  ->  arb_core::VoucherBook
+#
+# ILLUSTRATIVE RULES showing the schema. Real tiers are published by each platform a
+# few days before the campaign; enter them here or push the file live with /vouchers.
+#
+# Stacking: at most ONE rule per layer, applied in the order
+#   shop -> platform -> payment -> shipping
+# Within a layer the engine takes the largest discount the listing qualifies for.
+#
+# basis:
+#   "listed_price"        % and min_spend measured on the listed price (default)
+#   "after_prior_layers"  measured on the running subtotal after earlier layers
+# contested = true: limited-quantity voucher. Alerts show a second profit figure that
+#   assumes every contested voucher fails to apply.
+# valid_from / valid_until: RFC 3339 strings with an explicit +07:00 offset;
+#   the window is half-open [from, until).
+
+schema_version = 1
+campaign = "11.11-2026"
+
+# Payment methods you can actually pay with. Payment rules for anything else are ignored.
+available_payment_methods = ["vnpay_qr", "credit_card", "shopee_pay"]
+
+# ---- Shopee ------------------------------------------------------------------------
+[[voucher]]
+id = "shopee-shop-apple-300k"
+label = "Voucher shop: giảm 300k đơn từ 20tr"
+layer = "shop"
+sources = ["shopee_mall"]
+discount = { kind = "fixed", amount = 300_000 }
+min_spend = 20_000_000
+valid_from = "2026-11-11T00:00:00+07:00"
+valid_until = "2026-11-12T00:00:00+07:00"
+eligible_skus = ["iphone-16-pro-max-256-vna"]
+mall_only = true
+
+[[voucher]]
+id = "shopee-platform-8pct-cap1m"
+label = "Shopee 11.11: giảm 8% tối đa 1tr, đơn từ 10tr"
+layer = "platform"
+sources = ["shopee_mall"]
+discount = { kind = "percent", rate_bps = 800, cap = 1_000_000 }
+basis = "after_prior_layers"
+min_spend = 10_000_000
+valid_from = "2026-11-11T00:00:00+07:00"
+valid_until = "2026-11-11T02:00:00+07:00"
+eligible_categories = ["phone", "tablet", "laptop"]
+mall_only = true
+contested = true
+
+[[voucher]]
+id = "shopee-pay-500k"
+label = "ShopeePay: giảm 500k đơn từ 15tr"
+layer = "payment"
+sources = ["shopee_mall"]
+discount = { kind = "fixed", amount = 500_000 }
+basis = "after_prior_layers"
+min_spend = 15_000_000
+payment_method = "shopee_pay"
+valid_from = "2026-11-11T00:00:00+07:00"
+valid_until = "2026-11-12T00:00:00+07:00"
+contested = true
+
+[[voucher]]
+id = "shopee-freeship-xtra"
+label = "Freeship Xtra tối đa 50k"
+layer = "shipping"
+sources = ["shopee_mall"]
+discount = { kind = "fixed", amount = 50_000 }
+valid_from = "2026-11-11T00:00:00+07:00"
+valid_until = "2026-11-12T00:00:00+07:00"
+
+# ---- Lazada ------------------------------------------------------------------------
+[[voucher]]
+id = "lazada-platform-5pct-cap800k"
+label = "Lazada 11.11: giảm 5% tối đa 800k"
+layer = "platform"
+sources = ["lazmall"]
+discount = { kind = "percent", rate_bps = 500, cap = 800_000 }
+min_spend = 5_000_000
+valid_from = "2026-11-11T00:00:00+07:00"
+valid_until = "2026-11-12T00:00:00+07:00"
+mall_only = true
+contested = true
+
+# ---- Retail chains -----------------------------------------------------------------
+# Retailer promos are almost always payment-partner discounts.
+[[voucher]]
+id = "retail-vnpay-qr-500k"
+label = "VNPAY-QR: giảm 500k đơn từ 15tr"
+layer = "payment"
+sources = ["tgdd", "cellphones", "fptshop", "hoangha"]
+discount = { kind = "fixed", amount = 500_000 }
+min_spend = 15_000_000
+payment_method = "vnpay_qr"
+valid_from = "2026-11-09T00:00:00+07:00"
+valid_until = "2026-11-13T00:00:00+07:00"
+
+[[voucher]]
+id = "retail-credit-card-3pct"
+label = "Thẻ tín dụng đối tác: giảm 3% tối đa 800k"
+layer = "payment"
+sources = ["shopdunk", "cellphones"]
+discount = { kind = "percent", rate_bps = 300, cap = 800_000 }
+min_spend = 10_000_000
+payment_method = "credit_card"
+valid_from = "2026-11-09T00:00:00+07:00"
+valid_until = "2026-11-13T00:00:00+07:00"
+# Disabled until the card's own T&Cs are checked for the SKU category.
+enabled = false
